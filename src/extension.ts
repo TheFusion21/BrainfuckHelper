@@ -15,50 +15,72 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let outputChannel = vscode.window.createOutputChannel("brainfuck")
+	let outputChannel = vscode.window.createOutputChannel("brainfuck");
 	let disposable = vscode.commands.registerCommand('brainfuckhelper.showMemory', async () => {
 		const editor = vscode.window.activeTextEditor;
 
         if (editor) {
-			outputChannel.clear()
+			outputChannel.clear();
             let document = editor.document;
 
             // Get the document text
             const documentText = document.getText();
 
-			var memory = new Uint8Array(0xFFFF);
+			var memory: Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array = new Uint8Array(0xFFFF);
 
-			var brainfuck = documentText
-			var lastInput = 0
-			var pointer = 0
-			var programPosition = 0
-			var lastLoopOpen: number[] = []
-			memory = new Uint8Array(0xFFFF);
-			var output = ""
-			var input = ""
-			var length = 30
-			var wait = 0
-			var timeout = 20000
+			var brainfuck = documentText;
+			var lastInput = 0;
+			var pointer = 0;
+			var programPosition = 0;
+			var lastLoopOpen: number[] = [];
+			var output = "";
+			var input = "";
+			var length = 30;
+			var wait = 0;
+			var timeout = 20000;
 			documentText.split("\n").forEach(e => {
 				if(e.startsWith("input:")) {
-					input = e.substring(6, e.length)
+					input = e.substring(6, e.length);
 				}
 				if(e.startsWith("debug:")) {
-					length = parseInt(e.substring(6, e.length))
+					length = parseInt(e.substring(6, e.length));
 				}
 				if(e.startsWith("step:")) {
-					wait = parseInt(e.substring(5, e.length))
+					wait = parseInt(e.substring(5, e.length));
 				}
 				if(e.startsWith("timeout:")) {
-					timeout = parseInt(e.substring(8, e.length))
+					timeout = parseInt(e.substring(8, e.length));
 				}
-			})
-			outputChannel.show()
+				if(e.startsWith("memory:")) {
+					const memType = e.substring(7, e.length);
+					switch(memType) {
+					case "uint8":
+						memory = new Uint8Array(0xFFFF);
+						break;
+					case "int8":
+						memory = new Int8Array(0xFFFF);
+						break;
+					case "uint16":
+						memory = new Uint16Array(0xFFFF);
+						break;
+					case "int16":
+						memory = new Int16Array(0xFFFF);
+						break;
+					case "uint32":
+						memory = new Uint32Array(0xFFFF);
+						break;
+					case "int32":
+						memory = new Int32Array(0xFFFF);
+						break;
+					}
+				}
+			});
+			outputChannel.show();
 			var startTime = Date.now();
-			outputChannel.append("Starting execution\n\n")
+			outputChannel.append("Starting execution\n\n");
 			while (programPosition < brainfuck.length)
 			{
-				if (lastLoopOpen.length >= 0 && lastLoopOpen[0] == -1 && brainfuck[programPosition] != ']' && brainfuck[programPosition] != '[')
+				if (lastLoopOpen.length >= 0 && lastLoopOpen[0] === -1 && brainfuck[programPosition] !== ']' && brainfuck[programPosition] !== '[')
 				{
 					programPosition++;
 					continue;
@@ -67,11 +89,15 @@ export function activate(context: vscode.ExtensionContext) {
 				{
 					case '<': // Decrease pointer
 						pointer--;
-						if (pointer < 0) pointer = memory.length - 1;
+						if (pointer < 0) {
+							pointer = memory.length - 1;
+						}
 						break;
 					case '>': // Increase pointer right
 						pointer++;
-						if (pointer >= memory.length) pointer = 0;
+						if (pointer >= memory.length) {
+							pointer = 0;
+						}
 						break;
 					case '+': // Increase value
 						memory[pointer]++;
@@ -83,10 +109,10 @@ export function activate(context: vscode.ExtensionContext) {
 						output += (String.fromCharCode(memory[pointer]));
 						break;
 					case '[': // Open loop
-						lastLoopOpen.splice(0, 0, memory[pointer] == 0 || lastLoopOpen.length >= 1 && lastLoopOpen[0] == -1 ? -1 : programPosition);
+						lastLoopOpen.splice(0, 0, memory[pointer] === 0 || lastLoopOpen.length >= 1 && lastLoopOpen[0] === -1 ? -1 : programPosition);
 						break;
 					case ']': // Close loop
-						if (memory[pointer] == 0)
+						if (memory[pointer] === 0)
 						{
 							lastLoopOpen.splice(0, 1);
 							break;
@@ -96,10 +122,10 @@ export function activate(context: vscode.ExtensionContext) {
 						continue;
 					case ',': // Set the memory to the inputted key
 						memory[pointer] =new TextEncoder().encode(input[lastInput])[0];
-						lastInput++
+						lastInput++;
 						break;
 					case '#':
-						outputChannel.append("Debug trigger (#):" + DisplayMemory(memory, pointer, length) + "\n\n")
+						outputChannel.append("Debug trigger (#):" + displayMemory(memory, pointer, length) + "\n\n");
 						break;
 					default:
 						// Don't do anything in case there are any comments or line breaks
@@ -107,20 +133,20 @@ export function activate(context: vscode.ExtensionContext) {
 
 				}
 				programPosition++;
-				if(wait != 0) {
-					var text = "\n" + DisplayMemory(memory, pointer, length)
-					outputChannel.append(text)
-					await sleep(wait)
+				if(wait !== 0) {
+					var text = "\n" + displayMemory(memory, pointer, length);
+					outputChannel.append(text);
+					await sleep(wait);
 				}
 				if(Date.now() - startTime > timeout)
 				{
 					break; // implement timeout
 				}
 			}
-			var m = DisplayMemory(memory, pointer, length)
-			outputChannel.append("Brainfuck input:\n" + input + "\n\nBrainfuck output:\n" + output + "\n\nBrainfuck memory:\n" + m)
+			var m = displayMemory(memory, pointer, length);
+			outputChannel.append("Brainfuck input:\n" + input + "\n\nBrainfuck output:\n" + output + "\n\nBrainfuck memory:\n" + m);
 			if(Date.now() - startTime > timeout) {
-				outputChannel.append("\n\nBrainfuck has been terminated before the code has completed execution. The timeout of " + timeout + " ms has been passed")
+				outputChannel.append("\n\nBrainfuck has been terminated before the code has completed execution. The timeout of " + timeout + " ms has been passed");
 			}
 		}
 		
@@ -133,19 +159,21 @@ function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-function DisplayMemory(memory: Uint8Array, pointer: number, length = 30) {
-	var m = ""
+function displayMemory(memory: Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array, pointer: number, length = 30) {
+	var m = "";
 	for(let i = 0; i < length; i++)
 	{
-		if(i % 10 == 0) m += "\n" + i.toString().padEnd(5) + ":       " 
-		if(i == pointer) {
-			m += "|>" + memory[i].toString().padEnd(3) + "<|"
+		if(i % 8 === 0) {
+			m += "\n" + i.toString().padEnd(5) + ":       " ;
+		}
+		if(i === pointer) {
+			m += "|>" + memory[i].toString().padEnd(3) + "<|";
 		} else {
-			m += "| " + memory[i].toString().padEnd(3) + " |"
+			m += "| " + memory[i].toString().padEnd(3) + " |";
 		}
 		
 	}
-	return m
+	return m;
 }
 
 // this method is called when your extension is deactivated

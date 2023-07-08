@@ -9,6 +9,7 @@ Execute Brainfuck code in Visual Studio code:
 - Add `ìnput:[yourInput]` if you need input for your program. e. g. `input:ABCD` on the program `,.,.,.,.` will output `ABCD`
 - Add `debug:[number]` to set the amount of memory adresses to be outputted. e. g. `debug: 10` will output the first 10 memory addresses (default: 30)
 - Add `timeout:[milliseconds]` to set a timeout for program execution. The program wil terminate after this time (default: 20000). e. g. `timeout:50` will terminate the program after 50 milliseconds.
+- Add `memory:[memType]` to set the type of memory used. e. g. `memory:uint32`
 
 ## The interpreter
 - Supports all 8 brainfuck commands (`<>+-[],.`)

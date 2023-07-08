@@ -2,14 +2,14 @@
   "name": "brainfuckhelper",
 	"displayName": "brainfuckHelper",
 	"description": "Helps with some brainfuck stuff",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"publisher": "ComputerElite",
 	"engines": {
 		"vscode": "^1.62.0"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ComputerElite/BrainfuckHelper.git"
+		"url": "https://github.com/TheFusion21/BrainfuckHelper.git"
 	},
 	"categories": [
 		"Other"
